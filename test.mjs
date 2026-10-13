@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {safeUrl,validate,selectProducts} from './content.mjs';
+const data = JSON.parse(readFileSync(new URL('./content.json',import.meta.url)));
+assert.equal(validate(data),data);
+assert.equal(selectProducts(data).length,1);
+assert.equal(selectProducts(data,'사주')[0].name,'야화기방');
+assert.equal(selectProducts(data,'뷰티').length,0);
+for (const url of ['javascript:alert(1)','data:text/html,test','http://example.com','https://user:secret@example.com']) assert.equal(safeUrl(url),'');
+assert.equal(safeUrl('https://gibang.kr/main'),'https://gibang.kr/main');
+const invalid = structuredClone(data);invalid.products[0].url='javascript:alert(1)';assert.throws(() => validate(invalid));
+const missing = structuredClone(data);missing.products[0].url='';assert.throws(() => validate(missing));
+const badTag=structuredClone(data);badTag.products[0].tags=[null];assert.throws(()=>validate(badTag));
+console.log('PASS: schema, published products, category filtering, unsafe URLs and required links');

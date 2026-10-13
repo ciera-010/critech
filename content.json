@@ -1,0 +1,38 @@
+{
+  "headline": "critech",
+  "subtitle": "당신의 일상에서 중요한 한 방!",
+  "sectionTitle": "일상에 더하는 AI",
+  "products": [
+    {
+      "name": "야화기방",
+      "description": "당신의 생년월일과 태어난 시각으로 풀어보는 사주 이야기. 야화기방에서 나만의 운세를 만나보세요.",
+      "url": "https://gibang.kr/main",
+      "image": "",
+      "tags": [
+        "사주"
+      ],
+      "published": true
+    },
+    {
+      "name": "뷰티 & 스타일링 · 예시",
+      "description": "나에게 어울리는 뷰티와 스타일을 발견하는 서비스 자리입니다.",
+      "url": "",
+      "image": "",
+      "tags": [
+        "뷰티",
+        "스타일링"
+      ],
+      "published": false
+    },
+    {
+      "name": "사주 · 예시",
+      "description": "사주 서비스 소개를 위한 카드입니다. 실제 제품으로 교체해 주세요.",
+      "url": "",
+      "image": "",
+      "tags": [
+        "사주"
+      ],
+      "published": false
+    }
+  ]
+}
