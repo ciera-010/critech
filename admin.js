@@ -1,4 +1,4 @@
-import {validate,element,renderCards} from './content.mjs';
+import {validate,element,renderCards} from './content-lib.js';
 const $ = id => document.getElementById(id);
 let data, sha = '', connectedRepo = '', connectedBranch = '', dirty = false;
 const say = text => $('status').textContent = text;

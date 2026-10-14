@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {safeUrl,validate,selectProducts} from './content.mjs';
+import {safeUrl,validate,selectProducts} from './content-lib.js';
 const data = JSON.parse(readFileSync(new URL('./content.json',import.meta.url)));
 assert.equal(validate(data),data);
 assert.equal(selectProducts(data).length,1);
