@@ -1,11 +1,11 @@
 {
   "headline": "critech",
   "subtitle": "당신의 일상에서 중요한 한 방!",
-  "sectionTitle": "일상에 더하는 AI",
+  "sectionTitle": "삶의 질을 올려주는 서비스 마켓",
   "products": [
     {
       "name": "야화기방",
-      "description": "당신의 생년월일과 태어난 시각으로 풀어보는 사주 이야기. 야화기방에서 나만의 운세를 만나보세요.",
+      "description": "조선의 기방에서 기생들이 모시면서 풀어주는 사주 이야기. 야화기방에서 나만의 운세를 만나보세요.",
       "url": "https://gibang.kr/main",
       "image": "",
       "tags": [
