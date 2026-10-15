@@ -1,19 +1,45 @@
 import {validate,element,renderCards} from './content-lib.js';
 const $ = id => document.getElementById(id);
-let data, sha = '', connectedRepo = '', connectedBranch = '', dirty = false;
+let data, sha = '', connectedRepo = '', connectedBranch = '', dirty = false, pendingImages = 0;
 const say = text => $('status').textContent = text;
 if (location.hostname.endsWith('.github.io')) $('repo').value = `${location.hostname.split('.')[0]}/${location.pathname.split('/').filter(Boolean)[0] || `${location.hostname.split('.')[0]}.github.io`}`;
 function read() {
+  if (pendingImages) throw Error('이미지를 처리 중입니다. 잠시 후 다시 시도하세요.');
   return validate({headline:$('headline').value.trim(),subtitle:$('subtitle').value.trim(),sectionTitle:$('sectionTitle').value.trim(),products:[...$('products').children].map(card => Object.fromEntries(['name','description','url','image','tags','published'].map(key => { const field = card.querySelector(`[name="${key}"]`); return [key,key === 'published' ? field.checked : key === 'tags' ? [...new Set(field.value.split(/[\s,#]+/).filter(Boolean))] : field.value.trim()]; })))});
 }
 function addProduct(p) {
   const card = element('div','admin-product'), fieldset = element('fieldset'); fieldset.append(element('legend','',p.name || '새 제품'));
-  for (const [key,title] of [['name','제품명'],['description','설명'],['url','서비스 주소'],['image','썸네일 이미지 주소'],['tags','태그'],['published','사이트에 공개']]) {
+  for (const [key,title] of [['name','제품명'],['description','설명'],['url','서비스 주소'],['tags','태그'],['published','사이트에 공개']]) {
     const label = element('label','',title), input = element(key === 'description' ? 'textarea' : 'input'); input.name = key;
     if (key === 'published') { input.type = 'checkbox'; input.checked = p.published; } else { input.value = key === 'tags' ? p.tags.map(t => `#${t}`).join(' ') : p[key]; if (key === 'name') input.required = true; if (['image','url'].includes(key)) input.type = 'url'; }
     label.append(input); fieldset.append(label);
   }
+  const imageValue = element('input'); imageValue.type = 'hidden'; imageValue.name = 'image'; imageValue.value = p.image;
+  const uploadLabel = element('label','','썸네일 이미지 업로드'), upload = element('input'); upload.type = 'file'; upload.accept = 'image/jpeg,image/png,image/webp';
+  const imageStatus = element('p','hint',p.image ? '등록된 이미지가 있습니다.' : '이미지를 선택하지 않으면 제품명 커버가 표시됩니다.');
+  const clearImage = element('button','button','이미지 제거'); clearImage.type = 'button';
+  clearImage.onclick = () => { imageValue.value = ''; upload.value = ''; imageStatus.textContent = '이미지를 제거했습니다. 사이트에 반영하면 적용됩니다.'; dirty = true; };
+  upload.onchange = async () => {
+    const file = upload.files[0]; if (!file) return;
+    upload.disabled = true; pendingImages++; $('publish').disabled = true;
+    try { imageValue.value = await prepareThumbnail(file); imageStatus.textContent = `${file.name} · 준비 완료. 사이트에 반영하면 업로드됩니다.`; dirty = true; }
+    catch (error) { upload.value = ''; imageStatus.textContent = error.message; }
+    finally { upload.disabled = false; pendingImages--; $('publish').disabled = pendingImages > 0; }
+  };
+  uploadLabel.append(upload); fieldset.append(imageValue,uploadLabel,imageStatus,clearImage);
   const remove = element('button','button danger','제품 삭제'); remove.type = 'button'; remove.onclick = () => { if (confirm('이 제품을 목록에서 삭제할까요? 사이트에 반영하기 전까지 공개 페이지는 바뀌지 않습니다.')) {card.remove();dirty = true;} }; fieldset.append(remove); card.append(fieldset); $('products').append(card);
+}
+async function prepareThumbnail(file) {
+  if (!['image/jpeg','image/png','image/webp'].includes(file.type)) throw Error('JPG, PNG, WebP 이미지를 선택하세요.');
+  if (file.size > 10 * 1024 * 1024) throw Error('10MB 이하의 이미지를 선택하세요.');
+  const bitmap = await createImageBitmap(file);
+  try {
+    const scale = Math.min(1, 1200 / Math.max(bitmap.width,bitmap.height));
+    const canvas = document.createElement('canvas'); canvas.width = Math.max(1,Math.round(bitmap.width * scale)); canvas.height = Math.max(1,Math.round(bitmap.height * scale));
+    const context = canvas.getContext('2d'); context.fillStyle = '#ffffff'; context.fillRect(0,0,canvas.width,canvas.height); context.drawImage(bitmap,0,0,canvas.width,canvas.height);
+    for (const quality of [0.85,0.7,0.5,0.3]) { const result = canvas.toDataURL('image/jpeg',quality); if (result.length <= 200000) return result; }
+    throw Error('이미지가 복잡해 압축하지 못했습니다. 더 작은 이미지를 선택하세요.');
+  } finally { bitmap.close(); }
 }
 function populate(value) { data = validate(value); ['headline','subtitle','sectionTitle'].forEach(k => $(k).value = data[k]); $('products').replaceChildren(); data.products.forEach(addProduct); renderCards($('preview'),data.products); dirty = false; }
 function connection() { const repo = $('repo').value.trim(), branch = $('branch').value.trim(), token = $('token').value.trim(); if (!/^[\w.-]+\/[\w.-]+$/.test(repo) || !branch || !token) throw Error('저장소, 브랜치, 토큰을 입력하세요.'); return {repo,branch,token}; }
@@ -37,7 +63,7 @@ $('download').onclick = () => {try {const url = URL.createObjectURL(new Blob([JS
 $('editor').onsubmit = async event => {
   event.preventDefault(); $('publish').disabled = true;
   try { const value = read(), c = connection(); if (!sha || c.repo !== connectedRepo || c.branch !== connectedBranch) throw Error('먼저 이 저장소의 최신 내용을 불러오세요.');
-    const bytes = new TextEncoder().encode(JSON.stringify(value,null,2)+'\n'); const content = btoa(Array.from(bytes,b => String.fromCharCode(b)).join(''));
+    const bytes = new TextEncoder().encode(JSON.stringify(value,null,2)+'\n'); if (bytes.length > 900000) throw Error('전체 이미지 용량이 큽니다. 일부 이미지를 제거하거나 더 작은 이미지로 바꿔 주세요.'); const content = btoa(Array.from(bytes,b => String.fromCharCode(b)).join(''));
     const result = await api(c,'PUT',{message:'Update critech page content',content,sha,branch:c.branch}); sha = result.content.sha; dirty = false; say('GitHub에 저장했습니다. Pages 배포가 완료되면 사이트에 반영됩니다.');
   } catch(error) {say(error.message);} finally {$('publish').disabled = false;}
 };
