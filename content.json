@@ -18,7 +18,7 @@
     {
       "name": "픽노트",
       "description": "추천템을 판매하고 구매할 수 있는 마켓.\n직접 써보고, 다녀오고, 골라낸 것들.\n검색으로는 찾기 어려운 검증된 아이템 리스트를 만나보세요.",
-      "url": "",
+      "url": "https://picknote-market.vercel.app/",
       "image": "",
       "tags": [],
       "published": false
