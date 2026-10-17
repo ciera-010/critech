@@ -1,11 +1,11 @@
-import {validate,element,renderCards} from './content-lib.js?v=upload1';
+import {validate,element,renderCards} from './content-lib.js?v=text3';
 const $ = id => document.getElementById(id);
 let data, sha = '', connectedRepo = '', connectedBranch = '', dirty = false, pendingImages = 0;
 const say = text => $('status').textContent = text;
 if (location.hostname.endsWith('.github.io')) $('repo').value = `${location.hostname.split('.')[0]}/${location.pathname.split('/').filter(Boolean)[0] || `${location.hostname.split('.')[0]}.github.io`}`;
 function read() {
   if (pendingImages) throw Error('이미지를 처리 중입니다. 잠시 후 다시 시도하세요.');
-  return validate({headline:$('headline').value.trim(),subtitle:$('subtitle').value.trim(),sectionTitle:$('sectionTitle').value.trim(),products:[...$('products').children].map(card => Object.fromEntries(['name','description','url','image','tags','published'].map(key => { const field = card.querySelector(`[name="${key}"]`); return [key,key === 'published' ? field.checked : key === 'tags' ? [...new Set(field.value.split(/[\s,#]+/).filter(Boolean))] : field.value.trim()]; })))});
+  return validate({headline:$('headline').value.trim(),subtitle:$('subtitle').value.trim(),navNote:$('navNote').value.trim(),sectionTitle:$('sectionTitle').value.trim(),products:[...$('products').children].map(card => Object.fromEntries(['name','description','url','image','tags','published'].map(key => { const field = card.querySelector(`[name="${key}"]`); return [key,key === 'published' ? field.checked : key === 'tags' ? [...new Set(field.value.split(/[\s,#]+/).filter(Boolean))] : field.value.trim()]; })))});
 }
 function addProduct(p) {
   const card = element('div','admin-product'), fieldset = element('fieldset'); fieldset.append(element('legend','',p.name || '새 제품'));
@@ -41,7 +41,7 @@ async function prepareThumbnail(file) {
     throw Error('이미지가 복잡해 압축하지 못했습니다. 더 작은 이미지를 선택하세요.');
   } finally { bitmap.close(); }
 }
-function populate(value) { data = validate(value); ['headline','subtitle','sectionTitle'].forEach(k => $(k).value = data[k]); $('products').replaceChildren(); data.products.forEach(addProduct); renderCards($('preview'),data.products); dirty = false; }
+function populate(value) { data = validate(value); ['headline','subtitle','sectionTitle','navNote'].forEach(k => $(k).value = data[k]); $('products').replaceChildren(); data.products.forEach(addProduct); renderCards($('preview'),data.products); dirty = false; }
 function connection() { const repo = $('repo').value.trim(), branch = $('branch').value.trim(), token = $('token').value.trim(); if (!/^[\w.-]+\/[\w.-]+$/.test(repo) || !branch || !token) throw Error('저장소, 브랜치, 토큰을 입력하세요.'); return {repo,branch,token}; }
 async function api(c,method = 'GET',body) {
   const url = `https://api.github.com/repos/${c.repo}/contents/content.json${method === 'GET' ? `?ref=${encodeURIComponent(c.branch)}` : ''}`;

@@ -5,6 +5,8 @@ export function safeUrl(value) {
 }
 export function validate(data) {
   if (!data || !['headline','subtitle','sectionTitle'].every(k => typeof data[k] === 'string' && data[k].trim() && data[k].length <= 200) || !Array.isArray(data.products) || data.products.length > 100) throw Error('페이지 문구와 제품 목록을 확인하세요.');
+  if (data.navNote === undefined) data.navNote = '작은 기술, 새로운 일상';
+  if (typeof data.navNote !== 'string' || data.navNote.length > 200) throw Error('상단 오른쪽 문구는 200자 이하로 입력하세요.');
   for (const p of data.products) {
     if (!p || typeof p.name !== 'string' || !p.name.trim() || p.name.length > 100 || typeof p.description !== 'string' || p.description.length > 1000 || typeof p.published !== 'boolean' || !Array.isArray(p.tags) || p.tags.length > 20 || p.tags.some(t => typeof t !== 'string' || !t.trim() || t.length > 30)) throw Error('제품명, 설명, 태그를 확인하세요.');
     if (typeof p.url !== 'string' || typeof p.image !== 'string' || (p.url && !safeUrl(p.url)) || (p.image && !safeImage(p.image)) || (p.published && !p.url)) throw Error('제품과 이미지 주소는 https://로 시작해야 합니다. 공개 제품에는 링크가 필요합니다.');
