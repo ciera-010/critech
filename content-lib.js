@@ -9,6 +9,9 @@ export function validate(data) {
   if (typeof data.navNote !== 'string' || data.navNote.length > 200) throw Error('상단 오른쪽 문구는 200자 이하로 입력하세요.');
   for (const p of data.products) {
     if (!p || typeof p.name !== 'string' || !p.name.trim() || p.name.length > 100 || typeof p.description !== 'string' || p.description.length > 1000 || typeof p.published !== 'boolean' || !Array.isArray(p.tags) || p.tags.length > 20 || p.tags.some(t => typeof t !== 'string' || !t.trim() || t.length > 30)) throw Error('제품명, 설명, 태그를 확인하세요.');
+    for (const key of ['imageX','imageY']) { if (p[key] === undefined) p[key] = 50; if (!Number.isFinite(p[key]) || p[key] < 0 || p[key] > 100) throw Error('이미지 위치는 0~100 사이로 지정하세요.'); }
+    if (p.imageFit === undefined) p.imageFit = 'cover';
+    if (!['cover','contain'].includes(p.imageFit)) throw Error('이미지 표시 방식을 확인하세요.');
     if (typeof p.url !== 'string' || typeof p.image !== 'string' || (p.url && !safeUrl(p.url)) || (p.image && !safeImage(p.image)) || (p.published && !p.url)) throw Error('제품과 이미지 주소는 https://로 시작해야 합니다. 공개 제품에는 링크가 필요합니다.');
   }
   return data;
@@ -20,7 +23,7 @@ export function renderCards(container, products) {
   for (const p of products) {
     const card = element(p.url ? 'a' : 'article', 'card'); if (p.url) card.href = safeUrl(p.url);
     const thumb = element('div','thumbnail'); thumb.append(element('span','cover-word',p.name));
-    if (safeImage(p.image)) { const image = element('img'); image.alt = ''; image.loading = 'lazy'; image.referrerPolicy = 'no-referrer'; image.src = safeImage(p.image); image.addEventListener('error', () => image.remove()); thumb.append(image); }
+    if (safeImage(p.image)) { const image = element('img'); image.alt = ''; image.loading = 'lazy'; image.referrerPolicy = 'no-referrer'; image.src = safeImage(p.image); image.style.objectPosition = `${p.imageX ?? 50}% ${p.imageY ?? 50}%`; image.style.objectFit = p.imageFit || 'cover'; image.addEventListener('error', () => image.remove()); thumb.append(image); }
     const body = element('div','card-body'), tags = element('div','tags'); p.tags.forEach(t => tags.append(element('span','',`#${t}`)));
     const action = element('div','card-action'); action.append(element('span','',p.url ? '서비스 만나보기' : '준비 중'),element('span','',p.url ? '↗' : '·'));
     body.append(tags,element('h3','',p.name),element('p','',p.description),action); card.append(thumb,body); container.append(card);

@@ -1,11 +1,11 @@
-import {validate,element,renderCards} from './content-lib.js?v=text3';
+import {validate,element,renderCards,safeImage} from './content-lib.js?v=image-position1';
 const $ = id => document.getElementById(id);
 let data, sha = '', connectedRepo = '', connectedBranch = '', dirty = false, pendingImages = 0;
 const say = text => $('status').textContent = text;
 if (location.hostname.endsWith('.github.io')) $('repo').value = `${location.hostname.split('.')[0]}/${location.pathname.split('/').filter(Boolean)[0] || `${location.hostname.split('.')[0]}.github.io`}`;
 function read() {
   if (pendingImages) throw Error('이미지를 처리 중입니다. 잠시 후 다시 시도하세요.');
-  return validate({headline:$('headline').value.trim(),subtitle:$('subtitle').value.trim(),navNote:$('navNote').value.trim(),sectionTitle:$('sectionTitle').value.trim(),products:[...$('products').children].map(card => Object.fromEntries(['name','description','url','image','tags','published'].map(key => { const field = card.querySelector(`[name="${key}"]`); return [key,key === 'published' ? field.checked : key === 'tags' ? [...new Set(field.value.split(/[\s,#]+/).filter(Boolean))] : field.value.trim()]; })))});
+  return validate({headline:$('headline').value.trim(),subtitle:$('subtitle').value.trim(),navNote:$('navNote').value.trim(),sectionTitle:$('sectionTitle').value.trim(),products:[...$('products').children].map(card => Object.fromEntries(['name','description','url','image','imageX','imageY','imageFit','tags','published'].map(key => { const field = card.querySelector(`[name="${key}"]`); return [key,['imageX','imageY'].includes(key) ? Number(field.value) : key === 'published' ? field.checked : key === 'tags' ? [...new Set(field.value.split(/[\s,#]+/).filter(Boolean))] : field.value.trim()]; })))});
 }
 function addProduct(p) {
   const card = element('div','admin-product'), fieldset = element('fieldset'); fieldset.append(element('legend','',p.name || '새 제품'));
@@ -27,6 +27,9 @@ function addProduct(p) {
     finally { upload.disabled = false; pendingImages--; $('publish').disabled = pendingImages > 0; refreshPreview(); }
   };
   uploadLabel.append(upload); fieldset.append(imageValue,uploadLabel,imageStatus,clearImage);
+  const crop = element('div','thumbnail image-crop-preview'), cropImage = element('img'); cropImage.alt = '이미지 위치 미리보기'; cropImage.referrerPolicy = 'no-referrer'; crop.append(cropImage); fieldset.append(crop);
+  for (const [key,title] of [['imageX','가로 위치 (왼쪽 ↔ 오른쪽)'],['imageY','세로 위치 (위 ↔ 아래)']]) { const label = element('label','',title), range = element('input'); range.type = 'range'; range.name = key; range.min = '0'; range.max = '100'; range.value = p[key] ?? 50; label.append(range); fieldset.append(label); }
+  const fitLabel = element('label','','이미지 표시'), fit = element('select'); fit.name = 'imageFit'; for (const [value,title] of [['cover','카드 채우기 · 위치 조절'],['contain','이미지 전체 보기 · 잘리지 않게']]) { const option = element('option','',title); option.value = value; fit.append(option); } fit.value = p.imageFit || 'cover'; fitLabel.append(fit); fieldset.append(fitLabel); updateImagePreview(fieldset,p);
   const remove = element('button','button danger','제품 삭제'); remove.type = 'button'; remove.onclick = () => { if (confirm('이 제품을 목록에서 삭제할까요? 사이트에 반영하기 전까지 공개 페이지는 바뀌지 않습니다.')) {card.remove();dirty = true;refreshPreview();} }; fieldset.append(remove); card.append(fieldset); $('products').append(card);
 }
 async function prepareThumbnail(file) {
@@ -41,6 +44,7 @@ async function prepareThumbnail(file) {
     throw Error('이미지가 복잡해 압축하지 못했습니다. 더 작은 이미지를 선택하세요.');
   } finally { bitmap.close(); }
 }
+function updateImagePreview(card,p) { const preview = card.querySelector('.image-crop-preview'), img = preview.querySelector('img'); preview.hidden = !safeImage(p.image); if (p.image) img.src = safeImage(p.image); else img.removeAttribute('src'); img.style.objectPosition = `${p.imageX ?? 50}% ${p.imageY ?? 50}%`; img.style.objectFit = p.imageFit || 'cover'; }
 function populate(value) { data = validate(value); ['headline','subtitle','sectionTitle','navNote'].forEach(k => $(k).value = data[k]); $('products').replaceChildren(); data.products.forEach(addProduct); renderCards($('preview'),data.products); dirty = false; }
 function connection() { const repo = $('repo').value.trim(), branch = $('branch').value.trim(), token = $('token').value.trim(); if (!/^[\w.-]+\/[\w.-]+$/.test(repo) || !branch || !token) throw Error('저장소, 브랜치, 토큰을 입력하세요.'); return {repo,branch,token}; }
 async function api(c,method = 'GET',body) {
@@ -57,7 +61,7 @@ $('connect').onclick = async () => {
 };
 $('disconnect').onclick = () => { $('token').value = ''; sha = ''; connectedRepo = ''; connectedBranch = ''; say('연결을 해제했습니다.'); };
 $('add').onclick = () => {addProduct({name:'',description:'',url:'',image:'',tags:[],published:false});dirty = true;};
-function refreshPreview() { try { const value = read(); renderCards($('preview'),value.products); for (const card of $('products').children) card.querySelector('legend').textContent = card.querySelector('[name="name"]').value || '새 제품'; } catch(error) { say(error.message); } }
+function refreshPreview() { try { const value = read(); renderCards($('preview'),value.products); [...$('products').children].forEach((card,index) => {card.querySelector('legend').textContent = value.products[index].name || '새 제품'; updateImagePreview(card,value.products[index]);}); } catch(error) { say(error.message); } }
 $('editor').oninput = () => {dirty = true; refreshPreview(); say('수정한 내용을 미리보기에 반영했습니다. 정보 저장하기를 누르면 공개 사이트에도 적용됩니다.');};
 $('preview-button').onclick = () => {try {renderCards($('preview'),read().products);say('미리보기를 갱신했습니다.');} catch(error) {say(error.message);}};
 $('download').onclick = () => {try {const url = URL.createObjectURL(new Blob([JSON.stringify(read(),null,2)+'\n'],{type:'application/json'}));const a = element('a');a.href = url;a.download = 'content.json';a.click();setTimeout(() => URL.revokeObjectURL(url),1000);say('백업 파일을 내려받았습니다.');} catch(error) {say(error.message);}};
