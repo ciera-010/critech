@@ -1,4 +1,4 @@
-import {validate,element,renderCards,safeImage} from './content-lib.js?v=image-position1';
+import {validate,element,renderCards,safeImage} from './content-lib.js?v=webp1';
 const $ = id => document.getElementById(id);
 let data, sha = '', connectedRepo = '', connectedBranch = '', dirty = false, pendingImages = 0;
 const say = text => $('status').textContent = text;
@@ -22,7 +22,7 @@ function addProduct(p) {
   upload.onchange = async () => {
     const file = upload.files[0]; if (!file) return;
     upload.disabled = true; pendingImages++; $('publish').disabled = true;
-    try { imageValue.value = await prepareThumbnail(file); imageStatus.textContent = `${file.name} · 준비 완료. 사이트에 반영하면 업로드됩니다.`; dirty = true; }
+    try { imageValue.value = await prepareThumbnail(file); imageStatus.textContent = `${file.name} · WebP 자동 압축 완료. 정보 저장하기를 누르면 적용됩니다.`; dirty = true; }
     catch (error) { upload.value = ''; imageStatus.textContent = error.message; }
     finally { upload.disabled = false; pendingImages--; $('publish').disabled = pendingImages > 0; refreshPreview(); }
   };
@@ -40,7 +40,7 @@ async function prepareThumbnail(file) {
     const scale = Math.min(1, 1200 / Math.max(bitmap.width,bitmap.height));
     const canvas = document.createElement('canvas'); canvas.width = Math.max(1,Math.round(bitmap.width * scale)); canvas.height = Math.max(1,Math.round(bitmap.height * scale));
     const context = canvas.getContext('2d'); context.fillStyle = '#ffffff'; context.fillRect(0,0,canvas.width,canvas.height); context.drawImage(bitmap,0,0,canvas.width,canvas.height);
-    for (const quality of [0.85,0.7,0.5,0.3]) { const result = canvas.toDataURL('image/jpeg',quality); if (result.length <= 200000) return result; }
+    for (const quality of [0.85,0.7,0.5,0.3]) { const result = canvas.toDataURL('image/webp',quality); if (!result.startsWith('data:image/webp;base64,')) throw Error('WebP 변환을 지원하는 최신 브라우저에서 다시 시도하세요.'); if (result.length <= 200000) return result; }
     throw Error('이미지가 복잡해 압축하지 못했습니다. 더 작은 이미지를 선택하세요.');
   } finally { bitmap.close(); }
 }

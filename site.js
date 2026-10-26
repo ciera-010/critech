@@ -1,4 +1,4 @@
-import {validate,selectProducts,element,renderCards} from './content-lib.js?v=image-position1';
+import {validate,selectProducts,element,renderCards} from './content-lib.js?v=webp1';
 const status = document.querySelector('#status');
 try {
   const response = await fetch('./content.json', {cache:'no-store'}); if (!response.ok) throw Error('load');

@@ -1,4 +1,4 @@
-export function safeImage(value) { return typeof value === 'string' && /^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(value) && value.length <= 200000 ? value : safeUrl(value); }
+export function safeImage(value) { return typeof value === 'string' && /^data:image\/(?:jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(value) && value.length <= 200000 ? value : safeUrl(value); }
 export function safeUrl(value) {
   if (!value) return '';
   try { const u = new URL(value); return u.protocol === 'https:' && !u.username && !u.password ? u.href : ''; } catch { return ''; }

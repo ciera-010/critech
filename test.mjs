@@ -24,3 +24,5 @@ for (const [imageX,imageY,imageFit] of [[0,100,'cover'],[100,0,'contain'],[50,50
 for (const field of [{imageX:-1},{imageY:101},{imageX:'50'},{imageFit:'invalid'}]) { const invalid=structuredClone(data);Object.assign(invalid.products[0],field);assert.throws(()=>validate(invalid)); }
 const legacy=structuredClone(data);delete legacy.products[0].imageX;delete legacy.products[0].imageY;delete legacy.products[0].imageFit;validate(legacy);assert.equal(legacy.products[0].imageX,50);assert.equal(legacy.products[0].imageY,50);assert.equal(legacy.products[0].imageFit,'cover');
 console.log('PASS: image position bounds, fit modes and legacy defaults');
+
+const webp='data:image/webp;base64,UklGRg=='; assert.equal(safeImage(webp),webp); const webpProduct=structuredClone(data);webpProduct.products[0].image=webp;assert.equal(validate(webpProduct),webpProduct);assert.equal(safeImage('data:image/webp;base64,'+'A'.repeat(200000)),'');console.log('PASS: WebP upload validation and size limit');

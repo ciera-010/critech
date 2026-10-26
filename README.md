@@ -27,4 +27,4 @@ GitHub에 이 파일들을 올리고 Settings → Pages → Source를 GitHub Act
 
 최신 내용 불러오기 → 편집 → 정보 저장하기 순서로 사용합니다. 편집한 제품 내용은 아래 카드 미리보기에 자동으로 반영됩니다. GitHub의 파일 SHA로 동시 수정 충돌을 방지합니다. 충돌 시 백업을 내려받고 최신 내용을 다시 불러와 변경을 재적용하세요. 저장 완료와 Pages 배포 완료는 별개입니다.
 
-썸네일은 JPG·PNG·WebP(10MB 이하)를 업로드하며 최대 1200px JPEG로 자동 압축됩니다. 이미지는 content.json에 함께 저장되고 전체 파일은 900KB 이하로 제한됩니다. 기존 HTTPS 이미지 URL도 계속 표시됩니다. 백업 파일을 복구하려면 저장소의 content.json을 교체하세요.
+썸네일은 JPG·PNG·WebP(10MB 이하)를 업로드하며 최대 1200px WebP로 자동 압축됩니다. 이미지는 content.json에 함께 저장되고 전체 파일은 900KB 이하로 제한됩니다. 기존 HTTPS 이미지 URL도 계속 표시됩니다. 백업 파일을 복구하려면 저장소의 content.json을 교체하세요.
